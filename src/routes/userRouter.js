@@ -19,6 +19,7 @@ import { userValidation } from "../middelware/userValidation.js";
 import path from 'path';
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { verifyToken } from "../middelware/verifyToken.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -55,7 +56,7 @@ const upload = multer({
 })
 
 router.post("/login", login);
-router.put("/profile/update/:id",upload.single('profilePicture'),userValidation, updateUser);
+router.put("/profile/update",verifyToken,upload.single('profilePicture'),userValidation, updateUser);
 
 
 

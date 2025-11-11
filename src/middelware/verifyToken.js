@@ -10,12 +10,17 @@ export const verifyToken = (req, res, next) => {
         return next(error);
     }
 
-    const token = authentication.split(' ')[1]; // "Bearer <token>"
+    // ✅ تأكد من وجود Bearer وازالتها بشكل صحيح
+    const token = authentication.startsWith('Bearer ') 
+        ? authentication.slice(7) 
+        : authentication;
 
     try {
-        jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.userId = decoded.id;
         next();
     } catch (err) {
+        console.log("❌ Token Error:", err.message);
         const error = appError.create("Invalid token", 401, httpStatusText.ERROR);
         return next(error);
     }

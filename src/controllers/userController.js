@@ -27,7 +27,7 @@ export const updateUser = asyncWrapper(async (req, res, next) => {
   // ✅ استخراج البيانات من الطلب
   const { fullName, email, password, mobileNumber, landLine, faxNumber } =
     req.body;
-  const userId = req.params.id;
+  const userId = req.userId;
 
   // ✅ التأكد من وجود userId
   if (!userId) {
@@ -110,9 +110,10 @@ export const login = asyncWrapper(async (req, res, next) => {
       const error = appError.create("كلمة المرور غير صحيحة", 400, httpStatusText.FAIL);
       return next(error);
     }
+    const token = await generateJWT({  id: user.user_id});
     return res.status(200).json({
       message: "تسجيل الدخول الأول - يرجى تحديث الملف الشخصي",
-      next: `/profile/update/${user.user_id}`,
+      data :token,
       method: "PUT"
     });
   }

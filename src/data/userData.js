@@ -27,7 +27,6 @@ export const getUserById = async (user_id) => {
     // الاستعلام SQL الذي يربط الجداول كما تم شرحه سابقاً
     const queryText = `
         SELECT
-            R."role_name",              
             R."role_level"              
         FROM
             "User" U

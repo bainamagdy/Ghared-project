@@ -124,7 +124,7 @@ export const login = asyncWrapper(async (req, res, next) => {
     const token = await generateJWT({  id: user.user_id});
     return res.status(200).json({
       message: "تسجيل الدخول الأول - يرجى تحديث الملف الشخصي",
-      data :token,
+      data :{token},
       method: "PUT"
     });
   }

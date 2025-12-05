@@ -40,7 +40,7 @@ export const updateUser = asyncWrapper(async (req, res, next) => {
 
   const findUser = await User.getUser(email);
 
-  if (findUser || findUser.length === 0) {
+  if (!findUser ||! findUser.length === 0) {
     const error = appError.create("المستخدم  موجود مسبقا ", 400, httpStatusText.FAIL);
     return next(error);
   }

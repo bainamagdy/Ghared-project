@@ -241,11 +241,11 @@ export const AddUser = asyncWrapper(async(req,res , next)=>
     return next(error);
   }
 
-  const existingUser = await User.getUser(email);
-  if (existingUser && existingUser.length > 0) {
-    const error = appError.create("هذا البريد الإلكتروني مسجل بالفعل", 409, httpStatusText.FAIL);
-    return next(error);
-  }
+  // const existingUser = await User.getUser(email);
+  // if (existingUser && existingUser.length > 0) {
+  //   const error = appError.create("هذا البريد الإلكتروني مسجل بالفعل", 409, httpStatusText.FAIL);
+  //   return next(error);
+  // }
 
   const password_hash = await bcrypt.hash(password, 10);
 

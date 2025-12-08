@@ -271,3 +271,33 @@ ORDER BY c.college_id, d.department_id;
   return result.rows;
 
 }
+
+
+export const addUserRoleData = async (userId, roleId, departmentId) => {
+  // 1. نبحث أولاً عن الـ ID الخاص بربط هذا الدور بهذا القسم
+  const findDepRoleQuery = `
+    SELECT dep_role_id 
+    FROM "Department_Role" 
+    WHERE role_id = $1 AND department_id = $2
+  `;
+  
+  const depRoleResult = await pool.query(findDepRoleQuery, [roleId, departmentId]);
+
+  // لو مفيش ربط بين الدور والقسم ده في السيستم، نرجع null
+  if (depRoleResult.rows.length === 0) {
+    return null; 
+  }
+
+  const depRoleId = depRoleResult.rows[0].dep_role_id;
+
+  // 2. نضيف اليوزر لهذا الربط في جدول العضويات
+  // (ON CONFLICT DO NOTHING) دي زيادة عشان لو اليوزر عنده الدور ده ميعملش ايرور، بس يتجاهله
+  const insertQuery = `
+    INSERT INTO "User_Membership" (user_id, dep_role_id, start_date)
+    VALUES ($1, $2, CURRENT_DATE)
+    RETURNING *;
+  `;
+
+  const result = await pool.query(insertQuery, [userId, depRoleId]);
+  return result.rows[0];
+};

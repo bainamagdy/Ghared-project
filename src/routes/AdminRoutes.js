@@ -1,10 +1,13 @@
 import express from 'express';
-import { AdminLogin, AddAdmin ,getUserById,getAllUsers ,deleteUser ,AddUser,updateUser,getAllData} from '../controllers/AdminController.js'; 
+import { AdminLogin, AddAdmin ,getUserById,getAllUsers ,deleteUser ,AddUser,updateUser,getAllData,AddRole} from '../controllers/AdminController.js'; 
 import { allowedTo } from '../middelware/AllowedTo.js'; // ✅ تأكدي ان اسم الفولدر middelware ولا middleware
 import UserRoles from '../utils/UserRoles.js'; // ✅ استيراد Default
 import { verifyToken } from "../middelware/verifyToken.js";
 import { userValidation } from "../middelware/userValidation.js";
-import{userAddValidation} from "../middelware/userAddValidation.js"
+import{userAddValidation} from "../middelware/userAddValidation.js";
+import{userAddRoleValidation} from "../middelware/userAddRoleValidation.js"
+
+
 
 const router = express.Router();
 
@@ -65,6 +68,15 @@ router.post(
     allowedTo(UserRoles.ADMIN),
     userAddValidation,
     AddUser
+);
+
+router.post(
+    "/AddRole",
+    verifyToken,
+    allowedTo(UserRoles.ADMIN),
+    userAddRoleValidation,
+    AddRole
+
 );
 router.get("/getAllData",getAllData)
 

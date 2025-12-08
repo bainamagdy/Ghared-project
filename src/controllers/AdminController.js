@@ -284,3 +284,35 @@ export const getAllData = asyncWrapper(async(req, res, next) => {
   });
 
 });
+
+
+// adminController.js
+
+
+export const AddRole = asyncWrapper(async (req, res, next) => {
+  // شيلنا الـ if خلاص لأن الفاليديشن قام بالواجب
+  const { userId, roleId, departmentId } = req.body;
+
+  // نتأكد بس إن الـ req.userId (الأدمن) موجود
+  if (!req.userId) {
+     const error = appError.create("غير مصرح لك بإتمام هذه العملية", 401, httpStatusText.FAIL);
+     return next(error);
+  }
+
+  const newAdmin = await Admin.addUserRoleData(
+    userId,
+    roleId,
+    departmentId
+  );
+
+  if (!newAdmin) {
+    const error = appError.create("هذا الدور غير متاح لهذا القسم", 404, httpStatusText.FAIL);
+    return next(error);
+  }
+
+  return res.status(201).json({
+    status: httpStatusText.SUCCESS,
+    message: "تم إضافة الصلاحية بنجاح",
+    data: { admin: newAdmin }
+  });
+});

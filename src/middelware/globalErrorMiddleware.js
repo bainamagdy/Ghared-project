@@ -3,7 +3,7 @@ import httpStatusText from '../utils/httpStatusText.js';
 const globalErrorHandler = (err, req, res, next) => {
     
     // --- (A) التعامل مع خطأ التكرار (Database Error) ---
-    if (err.code === 11000) {
+    if (err.code === '23505'){
         
         // استخراج اسم الحقل (email/phone)
         const field = Object.keys(err.keyValue)[0];

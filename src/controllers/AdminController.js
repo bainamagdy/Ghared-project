@@ -290,6 +290,12 @@ export const getAllData = asyncWrapper(async(req, res, next) => {
 
 
 export const AddRole = asyncWrapper(async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map((err) => err.msg).join("، ");
+    const error = appError.create(errorMessages, 400, httpStatusText.FAIL);
+    return next(error);
+  }
   // شيلنا الـ if خلاص لأن الفاليديشن قام بالواجب
   const { userId, roleId, departmentId } = req.body;
 

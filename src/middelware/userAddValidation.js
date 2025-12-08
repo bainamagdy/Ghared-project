@@ -4,7 +4,7 @@ export const userAddValidation = [
  
 
   body("email")
-    .isEmail().withMessage("يرجى إدخال بريد إلكتروني صحيح"),
+    .withMessage("يرجى إدخال بريد إلكتروني صحيح"),
 
   body("password")
     .isLength({ min: 6 }).withMessage("يجب أن تتكون كلمة المرور من 6 أحرف على الأقل"),

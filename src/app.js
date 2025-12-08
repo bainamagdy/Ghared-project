@@ -6,44 +6,55 @@ import userRoutes from "./routes/userRouter.js";
 import httpStatusText from "./utils/httpStatusText.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import AdminRoutes from "./routes/AdminRoutes.js"
+import appError  from "./utils/appError.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+
+// Routes
+import transactionRoutes from "./routes/transactionRoutes.js";
+import userRoutes from "./routes/userRouter.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import AdminRoutes from "./routes/AdminRoutes.js";
+
+// Utils & Middlewares
+import httpStatusText from "./utils/httpStatusText.js";
+import appError from "./utils/appError.js"; // استدعي كلاس الايرور عشان الـ 404
+import globalErrorHandler from "./middelware/globalErrorMiddleware.js"; // تأكدي من سبيلنج middleware
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 
-// ✅ Middlewares أولاً
+// ✅ 1. Middlewares الأساسية
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Static files
+// ✅ 2. Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ✅ Routes بعد الـ middlewares
+// ✅ 3. Routes
 app.use("/api/users", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/notifications", notificationRoutes); 
-app.use("/api/Admin",AdminRoutes)
-
+app.use("/api/Admin", AdminRoutes);
 
 app.get("/", (req, res) => {
   res.send("🚀 Server is running and ready!");
 });
 
-// ✅ Error handler آخر حاجة
-app.use((error, req, res, next) => {
-  res.status(error.status || 500).json({
-    status: error.statusText || httpStatusText.ERROR,
-    message: error.message,
-    code: error.statusCode || 500,
-    data: null,
-  });
+// ✅ 4. Handling 404 Routes (اختياري بس مهم جداً)
+// عشان لو حد طلب مسار غلط، يروح للـ globalErrorHandler
+app.all('*', (req, res, next) => {
+    // بنكاريت ايرور ونبعته لـ next
+    const error = appError.create(`Can't find ${req.originalUrl} on this server!`, 404, httpStatusText.ERROR);
+    next(error);
 });
 
-export default app;
+// ✅ 5. Global Error Handler (هو ده بس اللي بنسيبه)
+// هو المسؤول عن هندلة الداتا بيز وارسال الرد النهائي
+app.use(globalErrorHandler);
 
-// src/app.js 
+export default app;

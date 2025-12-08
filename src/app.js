@@ -42,12 +42,17 @@ app.get("/", (req, res) => {
 // ✅ 4. Handling 404 Routes (اختياري بس مهم جداً)
 // عشان لو حد طلب مسار غلط، يروح للـ globalErrorHandler
 // ✅ الحل الصحيح (Regular Expression)
+// ✅ الحل: استخدم appError.create لتكون متسقة مع باقي المشروع
 app.all(/(.*)/, (req, res, next) => {
-   // كود معالجة الخطأ بتاعك زي ما هو
-   // مثال:
-   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404)); 
+    
+    const error = appError.create(
+        `Can't find ${req.originalUrl} on this server!`, 
+        404, 
+        httpStatusText.FAIL
+    );
+    
+    next(error); 
 });
-
 // ✅ 5. Global Error Handler (هو ده بس اللي بنسيبه)
 // هو المسؤول عن هندلة الداتا بيز وارسال الرد النهائي
 app.use(globalErrorHandler);

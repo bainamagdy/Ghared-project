@@ -1,6 +1,5 @@
-const appError = require('../utils/appError'); // 1. استدعاء الكلاس بتاعك
-const httpStatusText = require('../utils/httpStatusText');
-
+import appError from "../utils/appError.js";
+import httpStatusText from '../utils/httpStatusText.js';
 const globalErrorHandler = (err, req, res, next) => {
     
     // --- (A) التعامل مع خطأ التكرار (Database Error) ---

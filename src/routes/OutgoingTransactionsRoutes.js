@@ -1,15 +1,13 @@
-// transactionRoutes.js
+// OutgoingTransactionsRoutes.js    
 
 import express from 'express';
-import asyncWrapper from '../utils/asyncWrapper.js'; // 1. استيراد الـ Wrapper (عدّل المسار إذا لزم الأمر)
+import asyncWrapper from '../utils/asyncWrapper.js'; 
 import {
     getUserOutboxTransactions,
     getTransactionById,
     updateTransaction,
     deleteTransaction,
-    // إذا كانت دالة إنشاء المعاملة موجودة لديك، يجب استيرادها هنا أيضاً
-    // createTransaction, 
-} from '../controllers/transactionController.js'; 
+} from '../controllers/OutgoingTransactionsController.js'; // تم تعديل هذا المسار لاستخدام اسم الملف الجديد
 
 const router = express.Router();
 
@@ -18,7 +16,6 @@ const router = express.Router();
 // ===========================================
 
 // 1. جلب المعاملات الصادرة للمستخدم (GET /api/transactions/outbox/:user_id)
-// تم تغليفها بـ asyncWrapper
 router.get("/outbox/:user_id", asyncWrapper(getUserOutboxTransactions));
 
 // استخدام router.route لتطبيق الـ Wrapper على المسارات المشتركة

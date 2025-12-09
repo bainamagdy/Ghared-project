@@ -9,8 +9,8 @@ import {
     replyToTransaction,
     getTransactionForPrint
 } from "../controllers/transactionController.js";
-import { protect } from "../middleware/authMiddleware.js";
-import { checkSendPermission } from "../middleware/checkRole.js";
+import { protect } from "../middelware/authMiddleware.js";
+import { checkSendPermission } from "../middelware/checkRole.js";
 
 const router = express.Router();
 

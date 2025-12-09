@@ -1,5 +1,8 @@
+// OutgoingTransactionsController.js      
+// هذا الملف يحتوي على دوال التحكم لمعاملات الصادر 
+
 import pool from "../config/db.js";
-import appError from "../utils/appError.js"; // افتراض أن ملف appError موجود في المسار utils/appError.js
+import appError from "../utils/appError.js"; 
 
 // ====================================================
 // الدوال الخاصة بـ "الصادر" (Outbox) والمعاملات العامة
@@ -26,7 +29,6 @@ export const getUserOutboxTransactions = async (req, res, next) => {
             transactions: result.rows,
         });
     } catch (error) {
-        // عند حدوث خطأ في قاعدة البيانات، نستخدم appError ونمرره إلى middleware
         console.error("خطأ في جلب المعاملات الصادرة:", error);
         return next(appError.create("فشل في جلب المعاملات الصادرة", 500, "error"));
     }
@@ -35,13 +37,12 @@ export const getUserOutboxTransactions = async (req, res, next) => {
 // ----------------------------------------------------
 // 2. دالة جلب معاملة مفردة بالتفصيل
 // ----------------------------------------------------
-// @desc جلب تفاصيل معاملة واحدة (مطلوبة لعرض تفاصيل المعاملة عند الضغط عليها)
+// @desc جلب تفاصيل معاملة واحدة 
 // @route GET /api/transactions/:id
 // @access Private
 export const getTransactionById = async (req, res, next) => {
     const { id } = req.params;
     try {
-        // يتم استخدام JOIN لجلب اسم نوع المعاملة واسم المستخدم المرسل لتوفير بيانات كاملة
         const query = `
             SELECT T.*, TT.type_name, U.username AS sender_name
             FROM public."Transaction" T
@@ -52,7 +53,6 @@ export const getTransactionById = async (req, res, next) => {
         const result = await pool.query(query, [id]);
 
         if (result.rowCount === 0) {
-            // نستخدم appError لخطأ عدم العثور على المورد (404)
             return next(appError.create("لم يتم العثور على المعاملة", 404, "fail"));
         }
 
@@ -61,7 +61,6 @@ export const getTransactionById = async (req, res, next) => {
             transaction: result.rows[0],
         });
     } catch (error) {
-        // عند حدوث خطأ في قاعدة البيانات
         console.error("خطأ في جلب المعاملة المفردة:", error);
         return next(appError.create("فشل في جلب تفاصيل المعاملة", 500, "error"));
     }
@@ -70,15 +69,12 @@ export const getTransactionById = async (req, res, next) => {
 // ----------------------------------------------------
 // 3. دالة تعديل معاملة
 // ----------------------------------------------------
-// @desc تعديل معاملة موجودة (مثل المسودة أو معاملة صادر قابلة للتعديل)
+// @desc تعديل معاملة موجودة
 // @route PUT /api/transactions/:id
 // @access Private
 export const updateTransaction = async (req, res, next) => {
     const { id } = req.params;
-    // الحقول التي يمكن تعديلها
     const { content, type_id, subject, code } = req.body;
-    
-    // ملاحظة: يجب أن يكون هناك منطق إضافي هنا للتحقق من أن الحالة تسمح بالتعديل (مثل: current_status = 'draft')
     
     try {
         const updateQuery = `
@@ -91,7 +87,6 @@ export const updateTransaction = async (req, res, next) => {
         const result = await pool.query(updateQuery, [content, type_id, subject, code, id]);
 
         if (result.rowCount === 0) {
-            // نستخدم appError لخطأ عدم العثور على المورد (404)
             return next(appError.create("لم يتم العثور على المعاملة أو تعذر تحديثها.", 404, "fail"));
         }
 
@@ -100,7 +95,6 @@ export const updateTransaction = async (req, res, next) => {
             transaction: result.rows[0],
         });
     } catch (error) {
-        // عند حدوث خطأ في قاعدة البيانات
         console.error("خطأ في تحديث المعاملة:", error);
         return next(appError.create("فشل في تحديث المعاملة", 500, "error"));
     }
@@ -123,7 +117,6 @@ export const deleteTransaction = async (req, res, next) => {
         const result = await pool.query(deleteQuery, [id]);
 
         if (result.rowCount === 0) {
-            // نستخدم appError لخطأ عدم العثور على المورد (404)
             return next(appError.create("لم يتم العثور على المعاملة أو تم حذفها مسبقاً.", 404, "fail"));
         }
 
@@ -132,7 +125,6 @@ export const deleteTransaction = async (req, res, next) => {
             deletedTransaction: result.rows[0],
         });
     } catch (error) {
-        // عند حدوث خطأ في قاعدة البيانات
         console.error("خطأ في حذف المعاملة:", error);
         return next(appError.create("فشل في حذف المعاملة", 500, "error"));
     }

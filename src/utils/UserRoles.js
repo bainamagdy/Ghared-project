@@ -1,7 +1,6 @@
 const UserRoles = {
-    ADMIN: 0,
-    UserLevel1: 1,
-    UserLevel2: 2,
-}
+    ADMIN: 'admin',
+    USER: 'user'
+};
 
-export default UserRoles; // ✅ تم التعديل ليتوافق مع ES6
+export default UserRoles;

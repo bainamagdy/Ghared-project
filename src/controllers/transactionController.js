@@ -1,212 +1,64 @@
-import { pool } from "../config/db.js";
+// src/controllers/transactionController.js
+import pool from "../config/db.js";
 
-/* --------------------------------------------------
-  إرسال معاملة جديدة (Transaction Send)
--------------------------------------------------- */
-export const sendTransaction = async (req, res) => {
-  const {
-    sender_user_id,
-    type_id,
-    subject,
-    content,
-    receiver_user_id,
-    receiver_user_ids,
-    date,
-    current_status = "sent",
-    code = null,
-    parent_transaction_id = null,
-  } = req.body;
-
-  if (
-    !sender_user_id ||
-    !type_id ||
-    !content ||
-    (!receiver_user_id && !receiver_user_ids)
-  ) {
-    return res.status(400).json({
-      error:
-        "Required fields: sender_user_id, type_id, content and receiver_user_id(s)",
-    });
-  }
-
-  const receivers = Array.isArray(receiver_user_ids)
-    ? receiver_user_ids
-    : receiver_user_id
-    ? [receiver_user_id]
-    : [];
-
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-
-    // إدخال المعاملة
-    const trRes = await client.query(
-      `
-      INSERT INTO "Transaction"
-        ("content", "sender_user_id", "type_id", "parent_transaction_id", "current_status", "code", "date", "subject")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING "transaction_id"
-    `,
-      [
-        content,
-        sender_user_id,
-        type_id,
-        parent_transaction_id,
-        current_status,
-        code,
-        date || new Date().toISOString().slice(0, 10),
-        subject || null,
-      ]
-    );
-
-    const transactionId = trRes.rows[0].transaction_id;
-
-    // إدخال المستلمين
-    for (const rid of receivers) {
-      await client.query(
-        `INSERT INTO "Transaction_Receiver" ("transaction_id", "receiver_user_id") VALUES ($1, $2)`,
-        [transactionId, rid]
-      );
-    }
-
-    await client.query("COMMIT");
-
-    res.status(201).json({
-      message: "Transaction sent successfully",
-      transaction_id: transactionId,
-    });
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("❌ Error sending transaction:", err);
-    res.status(500).json({ error: "Database error while sending transaction" });
-  } finally {
-    client.release();
-  }
+export const getTransactionTypes = async (req, res) => {
+    const types = [
+        { value: "normal", label: "معاملة عادية" },
+        { value: "iqrar", label: "إقرار" }
+    ];
+    res.json(types);
 };
 
-/* --------------------------------------------------
-   عرض المعاملات المستلمة (Received)
--------------------------------------------------- */
-export const getReceivedTransactions = async (req, res) => {
-  const { userId } = req.params;
+export const createTransaction = async (req, res) => {
+    const sender_id = req.user.id;
+    const { receiver_id, type = "normal", content, attachments, saveAsDraft } = req.body;
 
-  try {
-    const result = await pool.query(
-      `
-      SELECT 
-        t."transaction_id",
-        t."subject",
-        t."content",
-        t."date",
-        t."current_status",
-        tt."type_name",
-        u."full_name" AS sender_name
-      FROM "Transaction" t
-      JOIN "Transaction_Type" tt ON t."type_id" = tt."type_id"
-      JOIN "User" u ON t."sender_user_id" = u."user_id"
-      JOIN "Transaction_Receiver" tr ON t."transaction_id" = tr."transaction_id"
-      WHERE tr."receiver_user_id" = $1
-      ORDER BY t."date" DESC
-      `,
-      [userId]
-    );
+    if (!receiver_id && !saveAsDraft) return res.status(400).json({ error: "receiver_id required" });
+    if (!["normal", "iqrar"].includes(type)) return res.status(400).json({ error: "Invalid type" });
 
+    if (saveAsDraft) {
+        const draftQ = `INSERT INTO drafts (user_id, content, attachments, created_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP) RETURNING id`;
+        const dres = await pool.query(draftQ, [sender_id, JSON.stringify({ receiver_id, type, content, attachments }), attachments || null]);
+        return res.status(201).json({ message: "Saved as draft", draftId: dres.rows[0].id });
+    }
+
+    const txQ = `INSERT INTO transactions (sender_id, receiver_id, type, content, attachments, created_at) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP) RETURNING id`;
+    const txRes = await pool.query(txQ, [sender_id, receiver_id, type, content, attachments || null]);
+    const transactionId = txRes.rows[0].id;
+
+    // notification
+    const notifQ = `INSERT INTO notifications (user_id, title, message, transaction_id, created_at) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`;
+    const title = type === "iqrar" ? "إقرار جديد" : "معاملة جديدة";
+    const message = type === "iqrar" ? "لديك إقرار جديد" : "لديك معاملة جديدة";
+    await pool.query(notifQ, [receiver_id, title, message, transactionId]);
+
+    res.status(201).json({ message: "Transaction created", transactionId });
+};
+
+export const getInbox = async (req, res) => {
+    const userId = req.user.id;
+    const q = `
+    SELECT t.id, t.sender_id, t.type, t.content, t.attachments, t.created_at,
+           u.name as sender_name
+    FROM transactions t
+    JOIN users u ON t.sender_id = u.id
+    WHERE t.receiver_id = $1
+    ORDER BY t.created_at DESC
+  `;
+    const result = await pool.query(q, [userId]);
     res.json(result.rows);
-  } catch (err) {
-    console.error("❌ Error fetching received transactions:", err);
-    res
-      .status(500)
-      .json({ error: "Database error while fetching received transactions" });
-  }
 };
 
-/* --------------------------------------------------
-   الرد على معاملة (Reply)
--------------------------------------------------- */
-export const replyToTransaction = async (req, res) => {
-  const { sender_user_id, parent_transaction_id, subject, content } = req.body;
-
-  try {
-    const receivers = await pool.query(
-      `SELECT receiver_user_id FROM "Transaction_Receiver" WHERE transaction_id = $1`,
-      [parent_transaction_id]
-    );
-
-    if (receivers.rows.length === 0)
-      return res
-        .status(404)
-        .json({ error: "No receivers found for the parent transaction." });
-
-    const newTransaction = await pool.query(
-      `
-      INSERT INTO "Transaction" 
-        ("subject", "content", "sender_user_id", "date", "current_status", "type_id", "parent_transaction_id")
-      VALUES ($1, $2, $3, CURRENT_DATE, 'sent', 1, $4)
-      RETURNING transaction_id
-      `,
-      [subject, content, sender_user_id, parent_transaction_id]
-    );
-
-    const newTransactionId = newTransaction.rows[0].transaction_id;
-
-    for (const row of receivers.rows) {
-      if (row.receiver_user_id !== sender_user_id) {
-        await pool.query(
-          `
-          INSERT INTO "Transaction_Receiver" ("transaction_id", "receiver_user_id")
-          VALUES ($1, $2)
-          `,
-          [newTransactionId, row.receiver_user_id]
-        );
-      }
-    }
-
-    res.status(201).json({
-      message: "Reply sent successfully.",
-      reply_transaction_id: newTransactionId,
-    });
-  } catch (err) {
-    console.error("❌ Error sending reply:", err);
-    res.status(500).json({ error: "Database error while sending reply." });
-  }
-};
-
-/* --------------------------------------------------
-  تجهيز بيانات المعاملة للطباعة (Print Data)
-------------------------------------------------- */
-export const getTransactionForPrint = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const result = await pool.query(
-      `
-      SELECT 
-        t."transaction_id",
-        t."subject",
-        t."content",
-        t."date",
-        t."current_status",
-        tt."type_name",
-        u."full_name" AS sender_name,
-        ARRAY_AGG(tr."receiver_user_id") AS receivers
-      FROM "Transaction" t
-      JOIN "Transaction_Type" tt ON t."type_id" = tt."type_id"
-      JOIN "User" u ON t."sender_user_id" = u."user_id"
- 
-      LEFT JOIN "Transaction_Receiver" tr ON t."transaction_id" = tr."transaction_id"
-      WHERE t."transaction_id" = $1
-      GROUP BY t."transaction_id", tt."type_name", u."full_name"
-      `,
-      [id]
-    );
-
-    if (result.rows.length === 0)
-      return res.status(404).json({ message: "Transaction not found" });
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error("❌ Error fetching transaction for print:", err);
-    res
-      .status(500)
-      .json({ error: "Database error while fetching transaction" });
-  }
+export const getSent = async (req, res) => {
+    const userId = req.user.id;
+    const q = `
+    SELECT t.id, t.receiver_id, t.type, t.content, t.attachments, t.created_at,
+           u.name as receiver_name
+    FROM transactions t
+    JOIN users u ON t.receiver_id = u.id
+    WHERE t.sender_id = $1
+    ORDER BY t.created_at DESC
+  `;
+    const result = await pool.query(q, [userId]);
+    res.json(result.rows);
 };

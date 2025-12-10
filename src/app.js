@@ -6,10 +6,11 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 
 // Routes
-import transactionRoutes from "./routes/transactionRoutes.js";
+import transactionsRoutes from "./routes/transactionsRoutes.js";
 import userRoutes from "./routes/userRouter.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import AdminRoutes from "./routes/AdminRoutes.js";
+import draftRoutes from "./routes/draftsRoutes.js"
 import outgoingTransactionRoutes from "./routes/OutgoingTransactionsRoutes.js"; 
 
 // Utils & Middlewares
@@ -32,10 +33,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ✅ 3. Routes
 app.use("/api/users", userRoutes);
-app.use("/api/transactions", transactionRoutes);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/Admin", AdminRoutes);
-app.use("/api/transactions", outgoingTransactionRoutes);
+app.use("/api/transaction", transactionsRoutes);
+app.use("/api/draft", draftRoutes);
+app.use("/api/outgoingtransactions", outgoingTransactionRoutes);
 
 
 app.get("/", (req, res) => {

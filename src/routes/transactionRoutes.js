@@ -1,16 +1,15 @@
+// src/routes/transactionRoutes.js
 import express from "express";
-import {
-  sendTransaction,
-  getReceivedTransactions,
-  replyToTransaction,
-  getTransactionForPrint,
-} from "../controllers/transactionController.js";
+import { createTransaction, getTransactionTypes, getInbox, getSent } from "../controllers/transactionController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import { checkPermission } from "../middleware/permissionMiddleware.js";
+import asyncWrapper from "../middleware/asyncWrapper.js";
 
 const router = express.Router();
 
-router.post("/send", sendTransaction);
-router.get("/received/:userId", getReceivedTransactions);
-router.post("/reply", replyToTransaction);
-router.get("/:id/print", getTransactionForPrint);
+router.get("/types", protect, asyncWrapper(getTransactionTypes));
+router.post("/", protect, checkPermission, asyncWrapper(createTransaction));
+router.get("/inbox", protect, asyncWrapper(getInbox));
+router.get("/sent", protect, asyncWrapper(getSent));
 
 export default router;

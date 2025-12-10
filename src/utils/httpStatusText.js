@@ -1,9 +1,9 @@
-const SUCCESS = "success";
-const FAIL = "fail";
-const ERROR = "error";
+// src/utils/httpStatusText.js
 
-export default  {
-    SUCCESS,
-    FAIL,
-    ERROR
+const httpStatusText = {
+    SUCCESS: "success",
+    FAIL: "fail",
+    ERROR: "error"
 };
+
+export default httpStatusText;

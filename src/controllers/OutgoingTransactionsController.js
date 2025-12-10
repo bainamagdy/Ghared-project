@@ -1,7 +1,7 @@
 // OutgoingTransactionsController.js      
 // هذا الملف يحتوي على دوال التحكم لمعاملات الصادر 
 
-import pool from "../config/db.js";
+import { pool } from "../config/db.js";
 import appError from "../utils/appError.js"; 
 
 // ====================================================

@@ -1,34 +1,29 @@
-import jwt from 'jsonwebtoken';
-import appError from '../utils/appError.js';
+import jwt from "jsonwebtoken";
+import httpStatusText from "../utils/httpStatusText.js";
+import appError from "../utils/appError.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+export const verifyToken = (req, res, next) => {
+    const authentication = req.headers['authorization'] || req.headers['Authorization'];
 
-const verifyToken = (req, res, next) => {
-    const authHeader = req.headers.authorization || req.header('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Access token required' });
+    if (!authentication) {
+        const error = appError.create("Token is required", 401, httpStatusText.ERROR);
+        return next(error);
     }
 
-    const token = authHeader.split(' ')[1];
+    // ✅ تأكد من وجود Bearer وازالتها بشكل صحيح
+    const token = authentication.startsWith('Bearer ') 
+        ? authentication.slice(7) 
+        : authentication;
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.currentUser = decoded;
 
-        // Normalized fields used across the codebase
-        req.user = decoded;
-
-        // populate currentUser for allowedTo / setCurrentUser compatibility
-        req.currentUser = {
-            id: decoded.id,
-            email: decoded.email,
-            roleLevel: (decoded.roleLevel ?? decoded.role) || decoded.level || null,
-            roleName: (decoded.roleName ?? decoded.role) || null
-        };
-
+        req.userId = decoded.id;
         next();
-    } catch (error) {
-        return res.status(401).json({ message: 'Invalid or expired token' });
+    } catch (err) {
+        console.log("❌ Token Error:", err.message);
+        const error = appError.create("Invalid token", 401, httpStatusText.ERROR);
+        return next(error);
     }
 };
-
-export { verifyToken };

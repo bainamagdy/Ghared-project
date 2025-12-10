@@ -11,6 +11,7 @@ import userRoutes from "./routes/userRouter.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import AdminRoutes from "./routes/AdminRoutes.js";
 import draftRoutes from "./routes/draftsRoutes.js"
+import outgoingTransactionRoutes from "./routes/OutgoingTransactionsRoutes.js"; 
 
 // Utils & Middlewares
 import httpStatusText from "./utils/httpStatusText.js";
@@ -36,6 +37,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/Admin", AdminRoutes);
 app.use("/api/transaction", transactionsRoutes);
 app.use("/api/draft", draftRoutes);
+app.use("/api/outgoingtransactions", outgoingTransactionRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("🚀 Server is running and ready!");

@@ -1,5 +1,5 @@
 // src/controllers/draftController.js
-import pool from "../config/db.js";
+import {pool} from "../config/db.js";
 
 export const getDrafts = async (req, res) => {
     const userId = req.user.id;

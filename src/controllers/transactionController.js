@@ -1,6 +1,5 @@
 // src/controllers/transactionController.js
-import pool from "../config/db.js";
-
+import {pool} from "../config/db.js"; // بدون أقواس
 export const getTransactionTypes = async (req, res) => {
     const types = [
         { value: "normal", label: "معاملة عادية" },

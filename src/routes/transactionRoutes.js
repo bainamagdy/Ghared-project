@@ -1,9 +1,9 @@
 // src/routes/transactionRoutes.js
 import express from "express";
 import { createTransaction, getTransactionTypes, getInbox, getSent } from "../controllers/transactionController.js";
-import { protect } from "../middleware/authMiddleware.js";
-import { checkPermission } from "../middleware/permissionMiddleware.js";
-import asyncWrapper from "../middleware/asyncWrapper.js";
+import { protect } from "../middelware/authMiddleware.js";
+import { checkPermission } from "../middelware/permissionMiddleware.js";
+import asyncWrapper from "../middelware/asyncWrapper.js";
 
 const router = express.Router();
 

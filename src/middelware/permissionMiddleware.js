@@ -1,5 +1,5 @@
 // src/middleware/permissionMiddleware.js
-import pool from "../config/db.js";
+import {pool} from "../config/db.js";
 
 /*
   Usage: import { checkPermission } from '...';

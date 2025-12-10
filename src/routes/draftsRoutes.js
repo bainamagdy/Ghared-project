@@ -7,8 +7,8 @@ import {
     deleteDraft,
     sendDraft
 } from "../controllers/draftController.js";
-import { protect } from "../middleware/authMiddleware.js";
-import asyncWrapper from "../middleware/asyncWrapper.js";
+import { protect } from "../middelware/authMiddleware.js";
+import asyncWrapper from "../middelware/asyncWrapper.js";
 
 const router = express.Router();
 

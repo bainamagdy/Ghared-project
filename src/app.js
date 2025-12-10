@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 
 // Routes
-import transactionsRoutes from "./routes/transactionsRoutes.js";
+import transactionRoutes from "./routes/transactionRoutes.js";
 import userRoutes from "./routes/userRouter.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import AdminRoutes from "./routes/AdminRoutes.js";
@@ -35,7 +35,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/Admin", AdminRoutes);
-app.use("/api/transaction", transactionsRoutes);
+app.use("/api/transaction", transactionRoutes);
 app.use("/api/draft", draftRoutes);
 app.use("/api/outgoingtransactions", outgoingTransactionRoutes);
 

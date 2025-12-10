@@ -1,142 +1,83 @@
-// src/routes/AdminRoutes.js
-import express from "express";
-import { body, param } from "express-validator";
-import { verifyToken } from "../middleware/verifyToken.js";
-import { setCurrentUser } from "../middleware/setCurrentUser.js";
-import { allowedTo } from "../middleware/AllowedTo.js";
+import express from 'express';
+import { AdminLogin, AddAdmin ,getUserById,getAllUsers ,deleteUser ,AddUser,updateUser,getAllData,AddRole} from '../controllers/AdminController.js'; 
+import { allowedTo } from '../middelware/AllowedTo.js'; // ✅ تأكدي ان اسم الفولدر middelware ولا middleware
+import UserRoles from '../utils/UserRoles.js'; // ✅ استيراد Default
+import { verifyToken } from "../middelware/verifyToken.js";
+import { userValidation } from "../middelware/userValidation.js";
+import{userAddValidation} from "../middelware/userAddValidation.js";
+import{userAddRoleValidation} from "../middelware/userAddRoleValidation.js"
 
-import * as AdminController from "../controllers/AdminController.js";
-import * as CollegeController from "../controllers/CollegeController.js";
-import * as DepartmentController from "../controllers/DepartmentController.js";
 
-import {
-    addCollegeValidation,
-    updateCollegeValidation,
-    deleteCollegeValidation,
-    getCollegeValidation,
-    getDepartmentsByCollegeValidation,
-    addDepartmentValidation,
-    updateDepartmentValidation,
-    deleteDepartmentValidation,
-    getDepartmentValidation,
-    getAllCollegesValidation,
-    getAllDepartmentsValidation
-} from "../middleware/collegeValidation.js";
 
 const router = express.Router();
 
-// ------------------- COLLEGES -------------------
 
-// إنشاء كلية (Super Admin only)
 router.post(
-    "/colleges",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(0),
-    addCollegeValidation,
-    CollegeController.addCollege
+    "/AdminLogin", 
+    AdminLogin
 );
 
-// جلب كل الكليات
-router.get(
-    "/colleges",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(1, 0),
-    getAllCollegesValidation,
-    CollegeController.getColleges
-);
 
-// جلب كلية واحدة
-router.get(
-    "/colleges/:id",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(1, 0),
-    getCollegeValidation,
-    CollegeController.getCollegeById
-);
 
-// تحديث كلية
-router.put(
-    "/colleges/:id",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(0),
-    updateCollegeValidation,
-    CollegeController.updateCollege
-);
-
-// حذف كلية
-router.delete(
-    "/colleges/:id",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(0),
-    deleteCollegeValidation,
-    CollegeController.deleteCollege
-);
-
-// جلب أقسام كلية محددة
-router.get(
-    "/colleges/:collegeId/departments",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(1, 0),
-    getDepartmentsByCollegeValidation,
-    DepartmentController.getDepartmentsByCollege
-);
-
-// ------------------- DEPARTMENTS -------------------
-
-// إنشاء قسم وربطه بكلية
 router.post(
-    "/departments",
+    "/AddAdmin",
     verifyToken,
-    setCurrentUser,
-    allowedTo(0),
-    addDepartmentValidation,
-    DepartmentController.addDepartment
+    allowedTo(UserRoles.ADMIN),
+    userValidation,
+    AddAdmin
 );
 
-// جلب كل الأقسام
+
+
 router.get(
-    "/departments",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(1, 0),
-    getAllDepartmentsValidation,
-    DepartmentController.getDepartments
+    "/getAllUsers", 
+    verifyToken,                // 1. لازم يكون مسجل دخول
+    allowedTo(UserRoles.ADMIN), // 2. لازم يكون أدمن
+    getAllUsers                 // 3. هات البيانات
 );
 
-// جلب قسم واحد
+
 router.get(
-    "/departments/:id",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(1, 0),
-    getDepartmentValidation,
-    DepartmentController.getDepartmentById
+    "/users/:id", 
+    verifyToken, 
+    allowedTo(UserRoles.ADMIN), // الأدمن بس اللي يقدر يكشف تفاصيل أي حد
+    getUserById
 );
 
-// تحديث قسم
-router.put(
-    "/departments/:id",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(0),
-    updateDepartmentValidation,
-    DepartmentController.updateDepartment
-);
 
-// حذف قسم
+
 router.delete(
-    "/departments/:id",
-    verifyToken,
-    setCurrentUser,
-    allowedTo(0),
-    deleteDepartmentValidation,
-    DepartmentController.deleteDepartment
+    "/users/:id",            // بناخد الـ id من الرابط
+    verifyToken,             // لازم يكون مسجل دخول
+    allowedTo(UserRoles.ADMIN), // لازم يكون أدمن
+    deleteUser               // نفذ الحذف
 );
+
+router.put(
+    "/users/:id",               // 1. بناخد الـ ID من الرابط
+    verifyToken,                // 2. لازم يكون مسجل دخول
+    allowedTo(UserRoles.ADMIN), // 3. لازم يكون أدمن عشان يقدر يعدل بيانات غيره
+    userValidation,             // 4. نتأكد إن البيانات (إيميل، موبايل..) مكتوبة صح
+    updateUser                  // 5. ننفذ الكنترولر
+);
+
+
+router.post(
+    "/AddUser",
+    verifyToken,
+    allowedTo(UserRoles.ADMIN),
+    userAddValidation,
+    AddUser
+);
+
+router.post(
+    "/AddRole",
+    verifyToken,
+    allowedTo(UserRoles.ADMIN),
+    userAddRoleValidation,
+    AddRole
+
+);
+router.get("/getAllData",getAllData)
 
 export default router;

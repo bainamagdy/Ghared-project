@@ -1,14 +1,14 @@
-import { pool } from "../config/db.js";
+import { pool } from "../config/db.js"; 
 
 export const getAdmin = async (email) => {
-    // نقوم بالربط بين 4 جداول للوصول إلى صلاحيات المستخدم
-    const queryText = `
-    SELECT
+  // نقوم بالربط بين 4 جداول للوصول إلى صلاحيات المستخدم
+  const queryText = `
+    SELECT 
       u.user_id AS id,
       u.email,
       u.password_hash,
-      u."full_name" AS "fullName",
-      u."profile_picture" AS "profilePicture",
+      u."full_name" AS "fullName",          
+      u."profile_picture" AS "profilePicture", 
       r."role_level" AS "roleLevel"
     FROM "User" u
     INNER JOIN "User_Membership" um ON u.user_id = um.user_id
@@ -17,11 +17,11 @@ export const getAdmin = async (email) => {
     WHERE u.email = $1
   `;
 
-
+  
     const result = await pool.query(queryText, [email]);
     return result.rows;
-
-
+  
+  
 };
 
 
@@ -30,52 +30,52 @@ export const getAdmin = async (email) => {
 
 
 export const AddAdminData = async (
-    fullName,
-    email,
-    hashedPassword,
-    mobileNumber, // الترتيب هنا رقم 4
-    landline,
-    faxNumber,
-    profilePicture // الترتيب هنا رقم 7
+  fullName,
+  email,
+  hashedPassword,
+  mobileNumber, // الترتيب هنا رقم 4
+  landline,
+  faxNumber,
+  profilePicture // الترتيب هنا رقم 7
 ) => {
-    const query = `
+  const query = `
     WITH new_user AS (
-      INSERT INTO "User"
+      INSERT INTO "User" 
       (full_name, email, password_hash, mobile_number, landline, fax_number, profile_picture, is_first_login)
       VALUES ($1, $2, $3, $4, $5, $6, $7, true)
       RETURNING user_id, full_name, email
     )
     INSERT INTO "User_Membership" (user_id, dep_role_id, start_date)
-    SELECT
-      (SELECT user_id FROM new_user),
-      (SELECT dr.dep_role_id
-       FROM "Department_Role" dr
-       JOIN "Role" r ON dr.role_id = r.role_id
-       WHERE dr.department_id = 0 AND r.role_level = 0
-       LIMIT 1),
+    SELECT 
+      (SELECT user_id FROM new_user), 
+      (SELECT dr.dep_role_id 
+       FROM "Department_Role" dr 
+       JOIN "Role" r ON dr.role_id = r.role_id 
+       WHERE dr.department_id = 0 AND r.role_level = 0 
+       LIMIT 1), 
       CURRENT_DATE
     RETURNING (SELECT user_id FROM new_user);
   `;
 
-    // القيم دي لازم تتوافق مع الـ $1, $2 اللي فوق
-    const values = [
-        fullName,
-        email,
-        hashedPassword,
-        mobileNumber,
-        landline,
-        faxNumber,
-        profilePicture
-    ];
+  // القيم دي لازم تتوافق مع الـ $1, $2 اللي فوق
+  const values = [
+    fullName,
+    email,
+    hashedPassword,
+    mobileNumber,
+    landline,
+    faxNumber,
+    profilePicture
+  ];
 
-    const result = await pool.query(query, values);
-    return result.rows[0];
+  const result = await pool.query(query, values);
+  return result.rows[0];
 };
 
 
 export const getAllSystemUsers = async () => {
-    const queryText = `
-    SELECT
+  const queryText = `
+    SELECT 
       u.user_id,
       u.full_name,
       u.email,
@@ -90,16 +90,16 @@ export const getAllSystemUsers = async () => {
     LEFT JOIN "Department" d ON dr.department_id = d.department_id
     ORDER BY u.user_id DESC;
   `;
-
-    const result = await pool.query(queryText);
-    return result.rows;
+  
+  const result = await pool.query(queryText);
+  return result.rows;
 };
 
 
 
 export const getSystemUserById = async (userId) => {
-    const queryText = `
-    SELECT
+  const queryText = `
+    SELECT 
       u.user_id,
       u.full_name,
       u.email,
@@ -107,49 +107,49 @@ export const getSystemUserById = async (userId) => {
       u.landline,      -- ممكن نحتاجها في التفاصيل
       u.fax_number,    -- ممكن نحتاجها في التفاصيل
       u.profile_picture,
-
+      
       -- بيانات الصلاحية
       r.role_level,
-
+      
       -- بيانات المكان
       d.department_name,
       c.college_name
-
+      
     FROM "User" u
     LEFT JOIN "User_Membership" um ON u.user_id = um.user_id
     LEFT JOIN "Department_Role" dr ON um.dep_role_id = dr.dep_role_id
     LEFT JOIN "Role" r ON dr.role_id = r.role_id
     LEFT JOIN "Department" d ON dr.department_id = d.department_id
     LEFT JOIN "College" c ON d.college_id = c.college_id
-
+    
     WHERE u.user_id = $1  -- 👈 ده الفلتر المهم
   `;
-
-    const result = await pool.query(queryText, [userId]);
-    return result.rows[0]; // بنرجع صف واحد بس (أوبجكت) لأن الـ ID مبيتكررش
+  
+  const result = await pool.query(queryText, [userId]);
+  return result.rows[0]; // بنرجع صف واحد بس (أوبجكت) لأن الـ ID مبيتكررش
 };
 
 
 
 export const deleteSystemUser = async (userId) => {
-    // 1️⃣ امسح "عضوية" اليوزر ده (عشان الرابط يتفك)
-    // ده بيمسح الصف من جدول User_Membership بس، مش بيمسح القسم نفسه
-    await pool.query(`DELETE FROM "User_Membership" WHERE user_id = $1`, [userId]);
+  // 1️⃣ امسح "عضوية" اليوزر ده (عشان الرابط يتفك)
+  // ده بيمسح الصف من جدول User_Membership بس، مش بيمسح القسم نفسه
+  await pool.query(`DELETE FROM "User_Membership" WHERE user_id = $1`, [userId]);
 
-    // 2️⃣ امسح "اليوزر" نفسه بقى من جدول User
-    const query = `DELETE FROM "User" WHERE user_id = $1 RETURNING user_id`;
-    const result = await pool.query(query, [userId]);
-
-    return result.rows[0];
+  // 2️⃣ امسح "اليوزر" نفسه بقى من جدول User
+  const query = `DELETE FROM "User" WHERE user_id = $1 RETURNING user_id`;
+  const result = await pool.query(query, [userId]);
+  
+  return result.rows[0];
 };
 
 
 export const updateSystemUser = async (userId, full_name, email, mobile_number, role_id, department_id) => {
-    const query = `
-    WITH
+  const query = `
+    WITH 
     upd_user AS (
       UPDATE "User"
-      SET
+      SET 
         full_name = COALESCE($2, full_name),
         email = COALESCE($3, email),
         mobile_number = COALESCE($4, mobile_number)
@@ -177,16 +177,16 @@ export const updateSystemUser = async (userId, full_name, email, mobile_number, 
     RETURNING *;
   `;
 
-    const result = await pool.query(query, [
-        userId,
-        full_name,
-        email,
-        mobile_number,
-        role_id,
-        department_id
-    ]);
+  const result = await pool.query(query, [
+    userId, 
+    full_name, 
+    email, 
+    mobile_number, 
+    role_id, 
+    department_id
+  ]);
 
-    return result.rows[0];
+  return result.rows[0];
 };
 
 
@@ -198,25 +198,25 @@ export const updateSystemUser = async (userId, full_name, email, mobile_number, 
 
 
 export const AddUserData = async (email, password_hash, roleId, departmentId) => {
-    const query = `
-    WITH
+  const query = `
+    WITH 
     new_user AS (
-      INSERT INTO "User"
+      INSERT INTO "User" 
       (full_name, email, password_hash, mobile_number, is_first_login)
-      VALUES
+      VALUES 
       (
-        'New Employee',
-        $1,
-        $2,
-        NULL,
+        'New Employee', 
+        $1, 
+        $2, 
+        NULL, 
         true
       )
       RETURNING user_id, email
     ),
     get_role AS (
       -- ✅ تصحيح الشرط: استخدام $4 و $3 بدلاً من 0
-      SELECT dep_role_id FROM "Department_Role"
-      WHERE department_id = $4 AND role_id = $3
+      SELECT dep_role_id FROM "Department_Role" 
+      WHERE department_id = $4 AND role_id = $3 
       LIMIT 1
     ),
     ins_role AS (
@@ -232,24 +232,24 @@ export const AddUserData = async (email, password_hash, roleId, departmentId) =>
       SELECT dep_role_id FROM ins_role
     )
     INSERT INTO "User_Membership" (user_id, dep_role_id, start_date)
-    SELECT
-      (SELECT user_id FROM new_user),
-      (SELECT dep_role_id FROM final_role LIMIT 1),
+    SELECT 
+      (SELECT user_id FROM new_user), 
+      (SELECT dep_role_id FROM final_role LIMIT 1), 
       CURRENT_DATE
     RETURNING *;
   `;
 
-    // ✅ تصحيح المصفوفة: التأكد من تمرير roleId و departmentId
-    const values = [email, password_hash, roleId, departmentId];
+  // ✅ تصحيح المصفوفة: التأكد من تمرير roleId و departmentId
+  const values = [email, password_hash, roleId, departmentId];
 
-    const result = await pool.query(query, values);
-    return result.rows[0];
+  const result = await pool.query(query, values);
+  return result.rows[0];
 };
 
-export const getAllData = async () => {
+export const getAllData = async()=>{
 
-    const queryText = `
- SELECT
+  const queryText = `
+ SELECT 
     d.department_id,
     d.department_name,
     d.department_type,
@@ -266,20 +266,38 @@ ORDER BY c.college_id, d.department_id;
 
 
   `;
-
-    const result = await pool.query(queryText);
-    return result.rows;
+  
+  const result = await pool.query(queryText);
+  return result.rows;
 
 }
 
-export const addCollege = async (college_name) => {
-    const query = `INSERT INTO "College" (college_name) VALUES ($1) RETURNING college_id, college_name`;
-    const result = await pool.query(query, [college_name]);
-    return result.rows[0];
-};
 
-export const addDepartment = async (department_name, department_type, college_id) => {
-    const query = `INSERT INTO "Department" (department_name, department_type, college_id) VALUES ($1, $2, $3) RETURNING department_id, department_name, department_type, college_id`;
-    const result = await pool.query(query, [department_name, department_type, college_id]);
-    return result.rows[0];
+export const addUserRoleData = async (userId, roleId, departmentId) => {
+  // 1. نبحث أولاً عن الـ ID الخاص بربط هذا الدور بهذا القسم
+  const findDepRoleQuery = `
+    SELECT dep_role_id 
+    FROM "Department_Role" 
+    WHERE role_id = $1 AND department_id = $2
+  `;
+  
+  const depRoleResult = await pool.query(findDepRoleQuery, [roleId, departmentId]);
+
+  // لو مفيش ربط بين الدور والقسم ده في السيستم، نرجع null
+  if (depRoleResult.rows.length === 0) {
+    return null; 
+  }
+
+  const depRoleId = depRoleResult.rows[0].dep_role_id;
+
+  // 2. نضيف اليوزر لهذا الربط في جدول العضويات
+  // (ON CONFLICT DO NOTHING) دي زيادة عشان لو اليوزر عنده الدور ده ميعملش ايرور، بس يتجاهله
+  const insertQuery = `
+    INSERT INTO "User_Membership" (user_id, dep_role_id, start_date)
+    VALUES ($1, $2, CURRENT_DATE)
+    RETURNING *;
+  `;
+
+  const result = await pool.query(insertQuery, [userId, depRoleId]);
+  return result.rows[0];
 };

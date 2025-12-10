@@ -62,6 +62,7 @@ export const AdminLogin = asyncWrapper(async (req, res, next) => {
       roleLevel: admin.roleLevel, 
       roleName: admin.roleName 
   });
+  console.log(roleLevel)
 
   // 6️⃣ الرد النهائي
   return res.json({

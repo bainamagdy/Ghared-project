@@ -1,7 +1,7 @@
 // OutgoingTransactionsRoutes.js    
 
 import express from 'express';
-import asyncWrapper from '../utils/asyncWrapper.js'; 
+import asyncWrapper from '../middelware/asyncwraper.js';
 import {
     getUserOutboxTransactions,
     getTransactionById,
@@ -23,8 +23,8 @@ router.route("/:id")
     // 2. جلب تفاصيل معاملة واحدة (GET /api/transactions/:id)
     .get(asyncWrapper(getTransactionById))
     // 3. تعديل معاملة موجودة (PUT /api/transactions/:id)
-    .put(asyncWrapper(updateTransaction)) 
+    .put(asyncWrapper(updateTransaction))
     // 4. حذف معاملة محددة (DELETE /api/transactions/:id)
-    .delete(asyncWrapper(deleteTransaction)); 
+    .delete(asyncWrapper(deleteTransaction));
 
 export default router;
